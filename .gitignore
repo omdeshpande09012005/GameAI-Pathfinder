@@ -1,0 +1,12 @@
+build/
+CMakeFiles/
+CMakeCache.txt
+*.exe
+*.obj
+.vscode/
+.idea/
+*.sln
+*.vcxproj*
+__pycache__/
+results/*
+!.gitkeep
