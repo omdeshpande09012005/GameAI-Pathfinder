@@ -1,7 +1,12 @@
 # 🧠 GameAI-Pathfinder: A Comparative Study on Intelligent Game Agents
+> Comparative implementation of **A\*** and **Q-Learning** for adaptive pathfinding in 2D grid environments — bridging classical search and modern reinforcement learning.
+
+![GitHub Repo stars](https://img.shields.io/github/stars/omdeshpande09012005/GameAI-Pathfinder?style=social)
+![GitHub last commit](https://img.shields.io/github/last-commit/omdeshpande09012005/GameAI-Pathfinder)
+
 
 ## 🎯 Project Overview
-**GameAI-Pathfinder** is a research and engineering project built in **C++** that provides a rigorous comparison between two fundamental pathfinding approaches: the **A*** search algorithm and **Q-Learning** (a model-free reinforcement learning technique). The project is designed to analyze how autonomous agents learn to navigate complex, obstacle-rich, 2D grid environments, bridging the gap between traditional search algorithms and modern machine learning. This work contributes to **Om Deshpande’s research portfolio** on AI in Games, emphasizing reproducible experiments, robust data analysis, and publication-ready results.
+**GameAI-Pathfinder** is a research and engineering project built in **C++** that provides a rigorous comparison between two fundamental pathfinding approaches: the **A\*** search algorithm and **Q-Learning** (a model-free reinforcement learning technique). The project is designed to analyze how autonomous agents learn to navigate complex, obstacle-rich, 2D grid environments, bridging the gap between traditional search algorithms and modern machine learning. This project is part of Om Deshpande’s research work in AI and Game Intelligence, emphasizing reproducible experiments, robust data analysis, and publication-ready results.
 
 ---
 
@@ -49,7 +54,7 @@ cmake --build .
 cd ..
 
 # 3️⃣ Run a quick test (e.g., A* or Q-Learning on a map)
-.uild\slime_escape.exe maps\demo_map.txt
+.\build\slime_escape.exe maps\demo_map.txt
 ```
 
 ### 2. 🧪 Running Automated Experiments
@@ -60,8 +65,7 @@ To run multiple iterations and collect comparative metrics, use the automated ex
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 
 # Execute the full benchmark script
-.\experiments
-un_all.ps1
+.\experiments\run_all.ps1
 ```
 
 This script will:
@@ -84,7 +88,7 @@ After running the experiments, generate visual comparisons using the Python anal
 pip install pandas matplotlib
 
 # Run the analysis script
-python experimentsnalyze.py
+python experiments\analyze.py
 ```
 
 Plots will be generated and saved in the results/plots/ directory:
@@ -148,3 +152,4 @@ B.Tech CSE @ MIT-WPU Pune
 🧾 License  
 MIT License © 2025 Om Deshpande.  
 You are free to use, modify, and distribute this project with attribution.
+
