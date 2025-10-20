@@ -4,7 +4,18 @@
 #include <iostream>
 #include <limits>
 #include <cstdint>
-#include <fstream>   // <<-- needed for ofstream/ifstream
+#include <fstream>   // for ofstream/ifstream
+#include <sstream>
+
+// cross-platform mkdir
+#ifdef _WIN32
+  #include <direct.h>
+  #define MKDIR(path) _mkdir(path)
+#else
+  #include <sys/stat.h>
+  #include <sys/types.h>
+  #define MKDIR(path) mkdir((path), 0755)
+#endif
 
 QLearningAgent::QLearningAgent(double a, double g, double e) : alpha(a), gamma(g), eps(e) {}
 
@@ -36,9 +47,25 @@ int QLearningAgent::chooseAction(int x,int y,double eps){
 }
 
 void QLearningAgent::train(const Grid &grid, int gx, int gy, int episodes){
+    // ensure results directory exists (cross-platform)
+    MKDIR("results"); // if exists, return value non-zero; ignore
+
+    // open CSV log for this training run (overwrites if exists)
+    std::ostringstream fn;
+    fn << "results/qlearning_train_" << episodes << ".csv";
+    std::string outpath = fn.str();
+    std::ofstream out(outpath, std::ios::trunc);
+    if (out.is_open()) {
+        out << "episode,total_reward,epsilon,success\n";
+    }
+
     std::mt19937 rng(123);
     for(int ep=0; ep<episodes; ++ep){
         int x = grid.startX(), y = grid.startY();
+        double episode_reward = 0.0;
+        bool ep_success = false;
+        // store current epsilon for logging (before decay)
+        double ep_eps = eps;
         for(int step=0; step<1000; ++step){
             int a = chooseAction(x,y, eps);
             int nx=x, ny=y;
@@ -48,7 +75,7 @@ void QLearningAgent::train(const Grid &grid, int gx, int gy, int episodes){
             else if(a==3) ny--;
             double reward = -1.0;
             if(grid.isBlocked(nx,ny)){ reward = -50; nx=x; ny=y; }
-            if(nx==gx && ny==gy) reward = 100;
+            if(nx==gx && ny==gy){ reward = 100; ep_success = true; }
             int64_t sak = stateActionKey(x,y,a);
             double maxnext = -1e18;
             for(int a2=0;a2<4;a2++){
@@ -64,10 +91,18 @@ void QLearningAgent::train(const Grid &grid, int gx, int gy, int episodes){
             if(itold != qtable.end()) oldq = itold->second;
             qtable[sak] = oldq + alpha * (reward + gamma * maxnext - oldq);
             x = nx; y = ny;
+            episode_reward += reward;
             if(nx==gx && ny==gy) break;
         }
+        // log this episode
+        if(out.is_open()){
+            out << ep << "," << episode_reward << "," << ep_eps << "," << (ep_success?1:0) << "\n";
+        }
+        // epsilon decay for next episode
         if(eps > 0.01) eps *= 0.995;
     }
+
+    if(out.is_open()) out.close();
 }
 
 Result QLearningAgent::run(const Grid &grid, int sx, int sy, int gx, int gy){
@@ -91,7 +126,6 @@ Result QLearningAgent::run(const Grid &grid, int sx, int sy, int gx, int gy){
     }
     return res;
 }
-
 
 void QLearningAgent::savePolicy(const std::string &path){
     std::ofstream out(path);

@@ -4,11 +4,11 @@
 #include <chrono>
 #include <random>
 #include <vector>
-
 #include "grid.h"
 #include "astar.h"
 #include "qlearning.h"
 
+// Simple CLI parser (minimal)
 struct CliOptions {
     std::string algo = "astar";          // "astar" or "qlearn"
     std::string map_path = "maps/demo_map.txt";
@@ -16,9 +16,6 @@ struct CliOptions {
     int seed = 42;
     int runs = 1;                        // evaluation runs after training
     bool help = false;
-    double alpha = 0.1;   // Q-learning learning rate
-    double gamma = 0.99;  // Q-learning discount
-    double eps = 0.2;     // Q-learning starting epsilon
 };
 
 void print_usage(const char* prog) {
@@ -28,15 +25,11 @@ void print_usage(const char* prog) {
     "  --algo astar|qlearn       Select algorithm (default: astar)\n"
     "  --map <path>              Path to map file (default: maps/demo_map.txt)\n"
     "  --train-episodes N        Training episodes for Q-Learning (default: 1000)\n"
-    "  --seed N                  RNG seed (default: 42)\n"
-    "  --runs N                  Number of evaluation runs after training (default: 1)\n"
-    "  --alpha <float>           Q-Learning learning rate (default: 0.1)\n"
-    "  --gamma <float>           Q-Learning discount factor (default: 0.99)\n"
-    "  --eps <float>             Q-Learning start epsilon (default: 0.2)\n"
+    "  --seed N                  RNG seed (default: 42)\n    --runs N                 Number of evaluation runs after training (default: 1)\n"
     "  --help                    Show this help message\n\n"
     "Examples:\n"
     "  " << prog << " --algo astar --map maps/demo_map.txt\n"
-    "  " << prog << " --algo qlearn --train-episodes 2000 --alpha 0.1 --gamma 0.99 --eps 0.2 --runs 3\n";
+    "  " << prog << " --algo qlearn --train-episodes 2000 --map maps/demo_map.txt --runs 3\n";
 }
 
 CliOptions parse_cli(int argc, char** argv) {
@@ -56,12 +49,6 @@ CliOptions parse_cli(int argc, char** argv) {
             opt.seed = std::stoi(argv[++i]);
         } else if (a == "--runs" && i+1 < argc) {
             opt.runs = std::stoi(argv[++i]);
-        } else if (a == "--alpha" && i+1 < argc) {
-            opt.alpha = std::stod(argv[++i]);
-        } else if (a == "--gamma" && i+1 < argc) {
-            opt.gamma = std::stod(argv[++i]);
-        } else if (a == "--eps" && i+1 < argc) {
-            opt.eps = std::stod(argv[++i]);
         } else {
             std::cerr << "Unknown or malformed option: " << a << "\n";
             opt.help = true;
@@ -75,7 +62,7 @@ int main(int argc, char** argv) {
     CliOptions opt = parse_cli(argc, argv);
     if (opt.help) { print_usage(argv[0]); return 0; }
 
-    // Seed global RNGs (some parts of code use std::srand or local rngs)
+    // seed rngs
     std::srand(opt.seed);
     std::mt19937 rng(opt.seed);
 
@@ -94,28 +81,26 @@ int main(int argc, char** argv) {
         Result r = astar.run(grid, sx, sy, gx, gy);
         auto t1 = std::chrono::high_resolution_clock::now();
         double ms = std::chrono::duration_cast<std::chrono::microseconds>(t1 - t0).count() / 1000.0;
+        // Print in CSV-friendly format for scripts
         std::cout << "A*: success=" << (r.success ? 1 : 0)
                   << " steps=" << r.steps
                   << " path_len=" << r.path_length
                   << " time_ms=" << ms << std::endl;
         return 0;
     } else if (opt.algo == "qlearn") {
-        // Construct agent with hyperparameters
-        QLearningAgent ql(opt.alpha, opt.gamma, opt.eps);
-
-        std::cout << "[INFO] Training Q-Learning for " << opt.train_episodes
-                  << " episodes (seed=" << opt.seed << ", alpha=" << opt.alpha
-                  << ", gamma=" << opt.gamma << ", eps=" << opt.eps << ")\n";
-
-        // Train
+        QLearningAgent ql;
+        ql = QLearningAgent(); // default init (you can adapt with alpha,gamma,eps if you want)
+        // set RNG seed inside the agent if needed (not shown here)
+        std::cout << "[INFO] Training Q-Learning for " << opt.train_episodes << " episodes (seed=" << opt.seed << ")\n";
         ql.train(grid, gx, gy, opt.train_episodes);
 
-        // Evaluation runs
+        // evaluation runs
         for (int run = 1; run <= opt.runs; ++run) {
             auto t0 = std::chrono::high_resolution_clock::now();
             Result r = ql.run(grid, sx, sy, gx, gy);
             auto t1 = std::chrono::high_resolution_clock::now();
             double ms = std::chrono::duration_cast<std::chrono::microseconds>(t1 - t0).count() / 1000.0;
+            // Q-Learn prints (no time by default previously) — include time_ms=ms for parity
             std::cout << "Q-Learn: success=" << (r.success ? 1 : 0)
                       << " steps=" << r.steps
                       << " path_len=" << r.path_length
