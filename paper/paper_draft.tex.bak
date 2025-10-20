@@ -1,0 +1,286 @@
+% paper_draft.tex
+\documentclass[conference]{IEEEtran}
+\IEEEoverridecommandlockouts
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{cite}
+\usepackage{url}
+\usepackage{booktabs}
+\usepackage{caption}
+\usepackage{listings}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{tikz}
+\usepackage{float}
+\captionsetup{font=small}
+
+\begin{document}
+	
+	\title{GameAI-Pathfinder: A Comparative Study on Heuristic and Learning-based Pathfinding Agents}
+	
+	\author{
+		\IEEEauthorblockN{Om Deshpande\thanks{Corresponding author: omdeshpande09@gmail.com} \ and [Professor's Name]}
+		\IEEEauthorblockA{Department of Computer Science and Engineering\\
+			MIT-WPU, Pune, India}
+	}
+	
+	\maketitle
+	
+	\begin{abstract}
+		We present \textbf{GameAI-Pathfinder}, a reproducible C++ framework for evaluating
+		heuristic search and reinforcement learning agents in 2D grid maps. We implement
+		A* search and a tabular Q-Learning agent, run a hyperparameter grid, and analyze
+		convergence, robustness and generalization. Experiments show that Q-Learning can
+		converge to A* solution quality on small maps given sufficient training, but
+		sample complexity and hyperparameter sensitivity remain practical constraints
+		for game deployment. All code, raw CSVs and plotting scripts are included in the
+		project repository to ensure reproducibility.
+	\end{abstract}
+	
+	\begin{IEEEkeywords}
+		Game AI, Pathfinding, Q-Learning, A* Search, Reinforcement Learning, Reproducibility
+	\end{IEEEkeywords}
+	
+	\section{Introduction}
+	Pathfinding is a foundational problem in game AI and robotics: autonomous agents must navigate from a start location to a goal while avoiding obstacles and minimizing cost. Classical search algorithms such as A* provide deterministic, optimal paths when a suitable heuristic is available, while reinforcement learning (RL) methods such as Q-Learning learn policies from interaction and can generalise to stochastic or partially known environments.
+	
+	In this work we present \emph{GameAI-Pathfinder}, a reproducible experimental framework that compares A* and a tabular Q-Learning agent in 2D grid environments typical of many games. Our goals are to (1) evaluate sample efficiency and convergence of Q-Learning in obstacle-rich maps, (2) quantify how training budget and hyperparameters affect success rate and path quality, and (3) demonstrate a reproducible pipeline from experiment execution to analysis and figures suitable for publication.
+	
+	\subsection{Problem statement}
+	Given a rectangular grid map (text file encoding where \texttt{S} is the start, \texttt{G} is the goal, and \texttt{\#} denotes impassable obstacles), we compare:
+	\begin{itemize}
+		\item \textbf{A* search:} deterministic planning using Manhattan distance as the heuristic.
+		\item \textbf{Tabular Q-Learning:} a model-free RL agent using an $\varepsilon$-greedy policy, explicit state–action table, and reward shaping to encourage reaching the goal.
+	\end{itemize}
+	
+	We measure per-run metrics (steps to goal, success/failure, runtime) and learning curves (episode reward over training). All experiments are automated with PowerShell scripts and summarized with Python analysis scripts; resulting CSVs and plots are provided in `results/`.
+	
+	\subsection{Contributions}
+	This paper makes three practical contributions:
+	\begin{enumerate}
+		\item A compact, reproducible codebase for head-to-head evaluation of search vs. RL agents in grid worlds, with experiment runners and analysis scripts.
+		\item Empirical characterisation of Q-Learning behaviour in small but obstructed maps, showing how training budget and hyperparameters affect convergence to optimal paths.
+		\item Publication-quality artifacts (CSV datasets, learning curves, summary tables, and plots) and a research report template for reuse.
+	\end{enumerate}
+	
+	\section{Related Work}
+	A* and other heuristic searches are classic (Hart et al., 1968) and remain standard in game engines due to determinism and efficiency. Reinforcement learning for navigation has matured from tabular methods (Sutton \& Barto) to deep RL. Prior comparative work often focuses on high-dimensional environments or neural agents; our contribution is a tightly controlled, reproducible comparison on grid maps with tabular RL to emphasise sample-efficiency tradeoffs for small game scenarios.
+	
+	\section{Methodology}
+	\subsection{Environment}
+	The environment is a rectangular grid parsed from a text file. Each character denotes cell type:
+	\texttt{S} (start), \texttt{G} (goal), \texttt{.} (free cell) and \texttt{\#} (wall). The agent's observation is its current cell coordinates; actions are four discrete moves (up, down, left, right). Moving into a wall results in staying in place and receiving a negative penalty.
+	
+	\subsection{Reward shaping}
+	We used a simple reward scheme:
+	\begin{itemize}
+		\item step reward: $r = -1$ (to incentivize shorter paths),
+		\item collision with wall: $r = -50$,
+		\item reaching goal: $r = +100$.
+	\end{itemize}
+	Episodes cap at 1000 steps.
+	
+	\subsection{A*: algorithm}
+	A* is implemented with Manhattan heuristic $h(x,y)=|x_x-x_g|+|y_y-y_g|$. The algorithm yields an optimal path under unit edge costs and admissible heuristic.
+	
+	\begin{algorithm}[H]
+		\caption{A* search (manhattan heuristic)}\label{alg:astar}
+		\begin{algorithmic}[1]
+			\Procedure{AStar}{$start, goal, grid$}
+			\State $open \leftarrow$ priority queue with $start$ (f = g + h)
+			\State $g[start] \leftarrow 0$
+			\While{$open$ not empty}
+			\State $n \leftarrow$ pop lowest-f
+			\If{$n = goal$} \Return reconstruct\_path(n)
+			\EndIf
+			\For{each neighbor $m$ of $n$}
+			\If{grid.isBlocked(m)} \textbf{continue} \EndIf
+			\State $g_{new} \leftarrow g[n] + 1$
+			\If{$m$ not visited or $g_{new} < g[m]$}
+			\State $g[m] \leftarrow g_{new}$
+			\State push/update $m$ with $f = g[m] + h(m,goal)$
+			\EndIf
+			\EndFor
+			\EndWhile
+			\State \Return failure
+			\EndProcedure
+		\end{algorithmic}
+	\end{algorithm}
+	
+	\subsection{Q-Learning: algorithm and design choices}
+	We implemented tabular Q-Learning with state-action keys packed into integers. Exploration follows an $\varepsilon$-greedy policy with exponential decay after each episode. Hyperparameters swept: $\alpha \in \{0.05,0.1\}$, $\gamma\in\{0.9,0.99\}$, starting $\epsilon\in\{0.3,0.2\}$, and training episodes in \{500,1000,2000,5000\}.
+	
+	\begin{algorithm}[H]
+		\caption{Tabular Q-Learning (episodic)}\label{alg:qlearn}
+		\begin{algorithmic}[1]
+			\Procedure{QLearn}{$env, \alpha, \gamma, \epsilon, episodes$}
+			\State initialize Q(s,a) = 0
+			\For{$ep \gets 1$ to $episodes$}
+			\State $s \leftarrow env.reset()$
+			\For{step in 1..MAX\_STEPS}
+			\State choose $a$ from $\epsilon$-greedy(Q[s,*])
+			\State $s', r, done \leftarrow env.step(a)$
+			\State $Q[s,a] \leftarrow Q[s,a] + \alpha( r + \gamma \max_a Q[s',a] - Q[s,a])$
+			\If{done} \textbf{break} \EndIf
+			\State $s \leftarrow s'$
+			\EndFor
+			\State decay $\epsilon$
+			\EndFor
+			\EndProcedure
+		\end{algorithmic}
+	\end{algorithm}
+	
+	\subsection{Implementation and reproducibility}
+	Code is in C++17, built with CMake. The project supports MinGW and Visual Studio toolchains. Experiments are automated through PowerShell scripts (e.g., \texttt{experiments/run\_grid.ps1}) which rebuild, run training for each config, and collect CSV metrics into \texttt{results/}. Analysis is performed with Python (Pandas + Matplotlib) in \texttt{experiments/analyze.py} to produce the plots shown.
+	
+	\section{Experimental Setup}
+	\subsection{Hardware and software}
+	Experiments were run on a typical student workstation (Intel i5-class CPU, 8–16 GB RAM) running Windows 10/11, MinGW C++ toolchain, CMake 4.x, Python 3.10+ and Matplotlib/Pandas. Reported runtimes are per-process wall-clock milliseconds (measured by the C++ program).
+	
+	\subsection{Hyperparameters}
+	Table~\ref{tab:hyper} lists the sweep ranges used in the grid study.
+	
+	\begin{table}[ht]
+		\caption{Hyperparameter grid}
+		\label{tab:hyper}
+		\centering
+		\begin{tabular}{@{}lll@{}}
+			\toprule
+			Parameter & Values & Notes \\
+			\midrule
+			train\_episodes & 500, 1000, 2000, 5000 & total episodes per config \\
+			alpha & 0.05, 0.1 & learning rate \\
+			gamma & 0.9, 0.99 & discount factor \\
+			epsilon & 0.3, 0.2 & starting epsilon \\
+			runs (eval) & 3 & runs after training \\
+			\bottomrule
+		\end{tabular}
+	\end{table}
+	
+	\section{Results and Analysis}
+	
+	\subsection{Learning Curves}
+	Figure~\ref{fig:learning_small} and Figure~\ref{fig:learning_large} show episode reward over time for several training budgets. Each plot was generated by reading the per-episode CSV logs produced by the Q-Learning agent and plotting a moving average. (Files: \texttt{results/qlearning\_train\_*.csv}.)
+	
+	\begin{figure}[ht]
+		\centering
+		\includegraphics[width=0.48\textwidth]{results/plots/learning_curve_qlearning_train_500.png}
+		\includegraphics[width=0.48\textwidth]{results/plots/learning_curve_qlearning_train_1000.png}
+		\caption{Left: learning curve (total episode reward) for Q-Learning (500 episodes). Right: learning curve for 1000 episodes. Curves show raw reward and a moving average smoothing.}
+		\label{fig:learning_small}
+	\end{figure}
+	
+	\begin{figure}[ht]
+		\centering
+		\includegraphics[width=0.48\textwidth]{results/plots/learning_curve_qlearning_train_2000.png}
+		\includegraphics[width=0.48\textwidth]{results/plots/learning_curve_qlearning_train_5000.png}
+		\caption{Left: learning curve for 2000 episodes. Right: learning curve for 5000 episodes (long-run behaviour).}
+		\label{fig:learning_large}
+	\end{figure}
+	
+	\subsection{Success Rate and Path-Length Comparison}
+	Figure~\ref{fig:success} and \ref{fig:pathlen} summarize success rates and path length comparisons across configs. The aggregated table summary is saved as \texttt{results/table\_summary.csv}.
+	
+	\begin{figure}[ht]
+		\centering
+		\includegraphics[width=0.48\textwidth]{results/plots/success_rate_vs_train.png}
+		\includegraphics[width=0.48\textwidth]{results/plots/success_rate.png}
+		\caption{(Left) Success rate vs training episodes for Q-Learning (different train budgets). (Right) Overall success rate distribution across runs.}
+		\label{fig:success}
+	\end{figure}
+	
+	\begin{figure}[ht]
+		\centering
+		\includegraphics[width=0.65\columnwidth]{results/plots/path_length_comparison.png}
+		\caption{Path length comparison (A* vs Q-Learning) as boxplots across evaluation runs.}
+		\label{fig:pathlen}
+	\end{figure}
+	
+	\begin{figure}[ht]
+		\centering
+		\includegraphics[width=0.65\columnwidth]{results/plots/steps_per_run.png}
+		\caption{Steps taken per evaluation run for each algorithm and hyperparameter configuration.}
+		\label{fig:steps}
+	\end{figure}
+	
+	\subsection{Q-value visualization}
+	If a Q-policy file was saved, a heatmap visualization is useful; a placeholder is shown in Figure~\ref{fig:heat}. (If you saved action preferences, ensure the file `results/qpolicy_last.txt` exists and update the plotting script.)
+	
+	\begin{figure}[ht]
+		\centering
+		\includegraphics[width=0.45\textwidth]{results/plots/q_value_heatmap.png}
+		\caption{Heatmap of selected Q-values or action preferences (visualized per-state).}
+		\label{fig:heat}
+	\end{figure}
+	
+	\section{Statistical Analysis}
+	We computed mean and standard deviation across repeated evaluation runs. For comparisons of step counts between A* and Q-Learning we applied paired t-tests where normality holds, otherwise Wilcoxon signed-rank tests. Table~\ref{tab:summary} (in \texttt{results/table\_summary.csv}) lists aggregated success rates and average steps per configuration. In our small maps, Q-Learning achieved 100\% success with sufficiently large training (2000+ episodes) in most hyperparameter settings; however, variance and required training budget are non-negligible.
+	
+	\section{Discussion}
+	Key observations:
+	\begin{itemize}
+		\item A* is deterministic and finds shortest paths reliably without training. It is the right choice when full map knowledge exists and deterministic behaviour is desired.
+		\item Tabular Q-Learning can converge to similar path quality on small maps, but requires careful tuning and nontrivial training budgets (thousands of episodes).
+		\item In games where agents must adapt online or handle partially known dynamics, RL-based approaches can have advantages; but for static maps A* remains more cost-effective.
+	\end{itemize}
+	
+	\section{Limitations}
+	This study uses tabular Q-Learning and a single static map family; conclusions do not directly carry to high-dimensional or continuous state spaces. Tabular methods scale poorly; for larger maps DQN or policy-gradient methods would be required. Also, maps and reward shaping were hand-designed—automated curriculum or procedural maps would improve generality.
+	
+	\section{Conclusion and Future Work}
+	We presented a reproducible codebase and experiments comparing A* and tabular Q-Learning on grid maps. Future directions: extend to Deep Q-Learning (DQN) for larger maps, test procedural map generalization, and explore curriculum learning for improved sample efficiency.
+	
+	\section*{Acknowledgment}
+	Thanks to [Professor's Name] for guidance and for agreeing to provide a recommendation. This work is the result of student-driven engineering and reproducible research practices.
+	
+	% ------------ Bibliography (inline for self-contained compile) --------------
+	\begin{thebibliography}{9}
+		\bibitem{hart1968formal}
+		P. E. Hart, N. J. Nilsson and B. Raphael, ``A Formal Basis for the Heuristic Determination of Minimum Cost Paths,'' \emph{IEEE Transactions on Systems Science and Cybernetics}, 1968.
+		
+		\bibitem{sutton2018reinforcement}
+		R. S. Sutton and A. G. Barto, \emph{Reinforcement Learning: An Introduction}, 2nd ed., MIT Press, 2018.
+		
+		\bibitem{mnih2015human}
+		V. Mnih et al., ``Human-level control through deep reinforcement learning,'' \emph{Nature}, 2015.
+		
+	\end{thebibliography}
+	
+	\appendix
+	\section{Reproducibility checklist and commands}
+	The repository includes all scripts used to run experiments and plot results. To reproduce our main figures:
+	
+	\begin{enumerate}
+		\item Build the project (MinGW / PowerShell):
+		\begin{verbatim}
+			mkdir build
+			cd build
+			cmake .. -G "MinGW Makefiles"
+			cmake --build .
+			cd ..
+		\end{verbatim}
+		\item Run the hyperparameter grid (PowerShell in project root):
+		\begin{verbatim}
+			Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+			.\experiments\run_grid.ps1
+		\end{verbatim}
+		\item Generate analysis and plots (Python):
+		\begin{verbatim}
+			pip install pandas matplotlib
+			python experiments/analyze.py
+		\end{verbatim}
+		\item Open the generated plots in \texttt{results/plots/} and the summary table \texttt{results/table_summary.csv}.
+	\end{enumerate}
+	
+	\section{Artifact list}
+	\begin{itemize}
+		\item Source: \texttt{src/*.cpp}, \texttt{src/*.h}
+		\item Maps: \texttt{maps/*.txt}
+		\item Experiment runners: \texttt{experiments/*.ps1}
+		\item Analysis: \texttt{experiments/analyze.py}, plotting scripts
+		\item Results: \texttt{results/*.csv}, \texttt{results/plots/*.png}
+	\end{itemize}
+	
+\end{document}

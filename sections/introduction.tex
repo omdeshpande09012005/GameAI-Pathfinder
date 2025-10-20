@@ -1,0 +1,25 @@
+% sections/introduction.tex
+\section{Introduction}
+Pathfinding is a foundational problem in game AI and robotics: autonomous agents must navigate from a start location to a goal while avoiding obstacles and minimising cost. Classical search algorithms such as A* provide deterministic, optimal paths when a suitable heuristic is available, while reinforcement learning (RL) methods such as Q-Learning learn policies from interaction and can generalise to stochastic or partially known environments.
+
+In this work we present \emph{GameAI-Pathfinder}, a reproducible experimental framework that compares A* and a tabular Q-Learning agent in 2D grid environments typical of many games. Our goals are to (1) evaluate sample efficiency and convergence of Q-Learning in obstacle-rich maps, (2) quantify how training budget and hyperparameters affect success rate and path quality, and (3) demonstrate a reproducible pipeline from experiment execution to analysis and figures suitable for publication.
+
+\subsection{Problem statement}
+Given a rectangular grid map (text file encoding where \texttt{S} is the start, \texttt{G} is the goal, and \texttt{\#} denotes impassable obstacles), we compare:
+\begin{itemize}
+  \item \textbf{A* search:} deterministic planning using Manhattan distance as the heuristic.
+  \item \textbf{Tabular Q-Learning:} an on-policy, model-free RL agent using an $\varepsilon$-greedy policy, explicit state–action table, and reward shaping to encourage reaching the goal.
+\end{itemize}
+
+We measure per-run metrics (steps to goal, success/failure, runtime) and learning curves (episode reward over training). All experiments are automated with PowerShell scripts and summarized with Python analysis scripts; resulting CSVs and plots are in \texttt{results/}.
+
+\subsection{Contributions}
+This paper makes three practical contributions:
+\begin{enumerate}
+  \item A compact, reproducible codebase for head-to-head evaluation of search vs. RL agents in grid worlds, with reproducible experiment runners and analysis scripts.
+  \item Empirical characterisation of Q-Learning behaviour in small but obstructed maps, showing how training budget and hyperparameters (learning rate, discount factor, exploration) affect convergence to optimal paths.
+  \item A set of publication-quality artifacts (CSV datasets, learning curves, summary tables, and plots) and a short research report template which students and engineers can reuse for similar investigations.
+\end{enumerate}
+
+\subsection{Paper organisation}
+The remainder of the paper is structured as follows. Section~\ref{sec:methods} describes the environment, agents, reward design, and experimental protocol. Section~\ref{sec:results} presents learning curves, success rates and path quality comparisons. Section~\ref{sec:discussion} analyses implications and limitations, and Section~\ref{sec:conclusion} concludes and outlines future work.

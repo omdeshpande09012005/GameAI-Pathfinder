@@ -1,0 +1,13 @@
+algo,map,seed,run,steps,time_ms,success
+astar,demo,42,1,20,0,1
+qlearn,demo,42,1,20,0,1
+astar,demo,42,2,20,0,1
+qlearn,demo,42,2,20,0,1
+astar,demo,42,3,20,0,1
+qlearn,demo,42,3,20,0,1
+astar,demo,42,1,20,0,1
+qlearn,demo,42,1,20,0,1
+astar,demo,42,2,20,0,1
+qlearn,demo,42,2,20,0,1
+astar,demo,42,3,20,0,1
+qlearn,demo,42,3,20,0,1

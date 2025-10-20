@@ -1,12 +1,21 @@
+# Build and IDE
 build/
-CMakeFiles/
-CMakeCache.txt
 *.exe
 *.obj
+*.o
+*.pdb
 .vscode/
 .idea/
-*.sln
-*.vcxproj*
+
+# Python cache
 __pycache__/
-results/*
-!.gitkeep
+*.pyc
+
+# Results (keep plots but ignore large intermediate files)
+experiments/results/*.csv
+!experiments/results/*.png
+!experiments/results/table_summary_tex.tex
+
+# OS files
+.DS_Store
+Thumbs.db

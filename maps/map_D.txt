@@ -1,0 +1,7 @@
+@"
+S..#...
+.#.#.#.
+#.#.#.#
+.#.#.#.
+G..#...
+"@ | Set-Content -Path "maps/map_D.txt" -Encoding ASCII

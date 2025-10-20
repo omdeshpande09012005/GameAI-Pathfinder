@@ -1,155 +1,169 @@
-# 🧠 GameAI-Pathfinder: A Comparative Study on Intelligent Game Agents
-> Comparative implementation of **A\*** and **Q-Learning** for adaptive pathfinding in 2D grid environments — bridging classical search and modern reinforcement learning.
+# 🧭 GameAI-Pathfinder
 
-![GitHub Repo stars](https://img.shields.io/github/stars/omdeshpande09012005/GameAI-Pathfinder?style=social)
-![GitHub last commit](https://img.shields.io/github/last-commit/omdeshpande09012005/GameAI-Pathfinder)
+**A Comparative Study on Heuristic and Learning-based Pathfinding Agents**
 
+This repository contains the full reproducible codebase, experiment scripts, and publication-ready paper for the project:
 
-## 🎯 Project Overview
-**GameAI-Pathfinder** is a research and engineering project built in **C++** that provides a rigorous comparison between two fundamental pathfinding approaches: the **A\*** search algorithm and **Q-Learning** (a model-free reinforcement learning technique). The project is designed to analyze how autonomous agents learn to navigate complex, obstacle-rich, 2D grid environments, bridging the gap between traditional search algorithms and modern machine learning. This project is part of Om Deshpande’s research work in AI and Game Intelligence, emphasizing reproducible experiments, robust data analysis, and publication-ready results.
+> **Om Deshpande**, *"GameAI-Pathfinder: A Comparative Study on Heuristic and Learning-based Pathfinding Agents"*, MIT-WPU, Pune (2025).
 
 ---
 
-## 🧩 Core Features
-| Feature | Description |
-| :--- | :--- |
-| **A*** **Search** | Heuristic-based pathfinding using **Manhattan distance** for optimal, deterministic solutions. |
-| **Q-Learning Agent** | A reinforcement learning agent employing an **ε-greedy policy**, sophisticated reward shaping, and decaying exploration. |
-| **Grid Environment** | Modular, loadable maps defined by text files (e.g., maps/demo_map.txt). |
-| **Experiment Runner** | Automated benchmarking and metric collection via a **PowerShell script** (experiments/run_all.ps1). |
-| **Analysis & Visualization** | Python scripts for data analysis and visualization, comparing performance metrics (experiments/analyze.py). |
-| **Research Artifacts** | Includes a full paper draft and figures (paper/AI_in_Games_SlimeEscape.md) for potential publication. |
+## 🧠 Overview
+
+The project presents a reproducible research framework comparing **A\*** (heuristic-based planning) and **Tabular Q-Learning** (learning-based navigation) for pathfinding in 2D grid maps. 
+
+It provides:
+- C++ implementations of both A\* and Q-Learning agents
+- PowerShell experiment automation scripts
+- Python-based analysis and statistical evaluation pipeline
+- IEEE-style research paper with full results, figures, and statistical tests
 
 ---
 
-## 🧱 Project Structure
-```
-GameAI-Pathfinder/
-├── src/                # C++ source files (Agent implementations, Grid/Map logic, main)
-├── maps/               # Text-based map layouts and environment files
-├── experiments/        # Scripts for automation (PowerShell) & data analysis (Python)
-├── results/            # Automatically generated data (.csv) and plots (.png)
-├── paper/              # Research paper drafts and supporting documents
-├── CMakeLists.txt      # CMake build configuration
-├── README.md           # Project documentation
-└── .gitignore
-```
+## 🌄 Preview
+
+<p align="center">
+  <img src="experiments/results/success_rate.png" width="400" alt="Success rate plot">
+</p>
+
+*Fig. 1: Success rate of Q-Learning agent vs. training episodes (compared to A\* baseline).*
 
 ---
 
-## ⚙️ Setup & Execution
-### 1. **Local Setup**
-Assuming a Windows environment with **PowerShell** and **MinGW/CMake** installed:
+## ⚙️ Setup Instructions
 
+### 1️⃣ Build the C++ Agents
 ```bash
-# 1️⃣ Clone the repository
-git clone https://github.com/<your-username>/GameAI-Pathfinder.git
-cd GameAI-Pathfinder
-
-# 2️⃣ Configure & build the C++ project
 mkdir build
 cd build
 cmake .. -G "MinGW Makefiles"
 cmake --build .
 cd ..
-
-# 3️⃣ Run a quick test (e.g., A* or Q-Learning on a map)
-.\build\slime_escape.exe maps\demo_map.txt
 ```
 
-### 2. 🧪 Running Automated Experiments
-To run multiple iterations and collect comparative metrics, use the automated experiment runner:
-
+### 2️⃣ Run Experiments
 ```powershell
-# Set execution policy to run the local script (if necessary)
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
-
-# Execute the full benchmark script
-.\experiments\run_all.ps1
+.\experiments\run_grid.ps1
 ```
 
-This script will:
-- Rebuild the project.
-- Run 3 iterations each of the A* and Q-Learning agents.
-- Save comprehensive metrics to results/metrics.csv.
-
-Example metrics.csv output:
-```
-algo,map,seed,run,steps,time_ms,success
-astar,demo,42,1,20,0,1
-qlearn,demo,42,1,20,0,1
-```
-
-### 3. 📊 Data Analysis & Visualization
-After running the experiments, generate visual comparisons using the Python analysis script:
-
+### 3️⃣ Analyze and Generate Plots
 ```bash
-# Install required dependencies
-pip install pandas matplotlib
-
-# Run the analysis script
-python experiments\analyze.py
+pip install -r experiments/requirements.txt
+python experiments/analyze.py
+python experiments/stat_tests.py
+python experiments/make_latex_table.py
 ```
 
-Plots will be generated and saved in the results/plots/ directory:
-- path_length_comparison.png
-- success_rate.png
-- steps_per_run.png
+### 4️⃣ Compile the Paper
+```bash
+cd paper
+pdflatex paper_draft_final.tex
+pdflatex paper_draft_final.tex
+```
 
 ---
 
-## 🧠 Research Context & Findings
-This project specifically investigates:
-- Comparative algorithmic performance (A* vs. Q-Learning) on path length and computation time.
-- The convergence rate of the Q-Learning agent in obstacle-rich environments.
-- The scalability and generalization potential of reinforcement-based agents.
+## 📊 Results Summary
 
-The findings are synthesized in the planned research paper, “Comparative Analysis of Heuristic and Reinforcement Learning Agents for Pathfinding in 2D Game Environments,” available as a draft in `/paper/AI_in_Games_SlimeEscape.md`.
+| Metric | Q-Learning | A* | Observation |
+|---------|-------------|----|--------------|
+| **Success Rate (5000 episodes)** | 100% | 100% | Q-Learning converges fully |
+| **Average Path Length** | +5–10% longer | Optimal | Minor deviation from A* |
+| **Paired T-Test** | *p = 0.1732* | — | No significant difference |
+| **Cohen’s d** | **1.20 (Large)** | — | Substantial practical difference |
 
-### 📈 Sample Results (Preliminary)
-| Algorithm | Avg Steps | Success Rate | Remarks |
-| :--- | :---: | :---: | :--- |
-| A* | 20 | 100% | Deterministic, guaranteed optimal path. |
-| Q-Learning | 20 | 100% | Successfully converged to the optimal path after 1000 training episodes. |
+> ✅ Q-Learning approaches A* performance with sufficient training, but remains sample-inefficient.
 
 ---
 
-## 🧰 Tech Stack
-| Category | Tools / Libraries |
-| :--- | :--- |
-| Language | C++17 |
-| Build System | CMake + MinGW |
-| AI Framework | Custom-built A* and Q-Learning implementations |
-| Data Analysis | Python (Pandas, Matplotlib) |
-| Automation | PowerShell |
-| Version Control | Git + GitHub |
+## 📂 Repository Structure
+
+```
+GameAI-Pathfinder/
+├── src/                      # C++ source files (A*, Q-Learning)
+├── include/                  # Header files
+├── experiments/              # Experiment automation + analysis
+│   ├── run_grid.ps1
+│   ├── analyze.py
+│   ├── stat_tests.py
+│   ├── make_latex_table.py
+│   ├── requirements.txt
+│   └── results/              # Plots, CSVs, LaTeX tables
+├── paper/                    # Final IEEE paper
+│   ├── paper_draft_final.tex
+│   ├── paper_draft_final.pdf
+├── CMakeLists.txt
+├── README.md
+├── LICENSE
+└── .gitignore
+```
 
 ---
 
-## 💡 Future Work
-This project serves as a strong foundation, with several planned extensions:
-- Deep Q-Learning (DQN): Integrate a neural network-based agent for high-dimensional state spaces.
-- Procedural Content: Implement procedural map generation for testing generalization.
-- Optimization: Fine-tune reward shaping and hyperparameter search.
-- Visualization: Integration with a graphics library (e.g., SFML) for real-time path and learning curve display.
+## 🧩 Key Insights
+- **A\***: Deterministic, fast, optimal for static maps.
+- **Q-Learning**: Adaptive but sample-intensive; effective in dynamic or partially known maps.
+- **Best results** achieved with $(\alpha=0.1,\gamma=0.99,\epsilon_0=0.2)$ over 5000 episodes.
 
 ---
 
-## 🧑‍💻 Author
-Om Deshpande  
-B.Tech CSE @ MIT-WPU Pune  
-📚 Research Interest: AI in Games, Systems, and Scalable Learning Architectures  
-🎮 Member @ Squad Up Esports | ⚙️ Ex-Intern @ Gtek Computers  
-
-💼 LinkedIn [http://www.linkedin.com/in/omdeshpande09]
-
-💻 GitHub [https://github.com/omdeshpande09012005]
-
-🌐 Portfolio [https://my-portfolio-omdeshpande09012005s-projects.vercel.app/]
+## 🧠 Tools Used
+- **C++17** (MinGW via CMake)
+- **Python 3.11** (Pandas, Matplotlib, NumPy, SciPy)
+- **PowerShell 5.1+** (automation)
+- **LaTeX / IEEEtran** (for paper generation)
 
 ---
 
-🧾 License  
-MIT License © 2025 Om Deshpande.  
-You are free to use, modify, and distribute this project with attribution.
+## 🧾 Citation
+If you use this framework or results in your research, please cite:
 
+```
+@article{deshpande2025gameai,
+  title={GameAI-Pathfinder: A Comparative Study on Heuristic and Learning-based Pathfinding Agents},
+  author={Deshpande, Om},
+  year={2025},
+  institution={MIT World Peace University}
+}
+```
+
+---
+
+## 👤 Author
+**Om Deshpande**  
+Department of Computer Science and Engineering  
+MIT World Peace University, Pune  
+📧 Email: [omdeshpande0901@gmail.com](mailto:omdeshpande0901@gmail.com)
+
+---
+
+## 📜 License
+```
+MIT License
+
+Copyright (c) 2025 Om Deshpande
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+```
+
+---
+
+## ⭐ Acknowledgment
+Special thanks to **Prof. [Name]** for guidance and support in the research and documentation process.

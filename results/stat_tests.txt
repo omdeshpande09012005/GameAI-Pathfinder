@@ -1,0 +1,4 @@
+N paired: 3
+Shapiro-Wilk on differences: W=0.9643, p=6.3689e-01
+Paired t-test: t=-2.0788, p=1.7319e-01
+Cohen's d (paired): -1.2002
